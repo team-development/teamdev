@@ -14,7 +14,7 @@ from subprocess import check_output, PIPE, Popen
 import subprocess
 import docker
 import dockerpty
-
+import messages
 
 class MyProgressPrinter(RemoteProgress):
     def update(self, op_code, cur_count, max_count=None, message=''):
@@ -118,6 +118,7 @@ class OSDPBase(object):
             client.login(username=dataMap['osdp']['dockerhubusername'], password=dataMap['osdp']['dockerhubpassword'], registry="https://index.docker.io/v1/")
             client.pull(IMG_SRC)
             client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
+        messages.send_message(dataMap['osdp']['username'] + " " +  "Just created a new" + " " + dataMap['osdp']['platform'] + " " +  "Development Environment") 
 
     def zipfolder(self):
         dt = datetime.datetime.now()
@@ -142,6 +143,7 @@ class OSDPBase(object):
             print("This should have already been created")
             exit()
         if dataMap['osdp']['platform'] == 'vagrant':
+            messages.send_message(dataMap['osdp']['username'] + " " + "Just started a vagrant box for Python Development")
             vagrant_folder = Path(final_directory)
             v = vagrant.Vagrant(vagrant_folder, quiet_stdout=False)
             try:
@@ -166,7 +168,8 @@ class OSDPBase(object):
             #client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
             #response = [line for line in client.push(dataMap['osdp']['pushto'] + ":" + dataMap['osdp']['runtime'], stream=True)]
             container_id = client.create_container(dataMap['osdp']['imagename'],stdin_open=True,tty=True,command='/bin/bash', volumes=dataMap['osdp']['dockerhome'],host_config=client.create_host_config \
-            (binds=['/home:/home',]))
+            # Need to adjust this for mac users - change /Users to /home
+            (binds=['/Users:/home',]))
             dockerpty.start(client, container_id)
 
     def stop(self, projectname):

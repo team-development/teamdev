@@ -7,7 +7,7 @@ import commands
 import socket
 from pathlib import Path
 from subprocess import Popen,PIPE
-
+import messages
 
 
 
@@ -29,8 +29,8 @@ def is_connected(REMOTE_SERVER):
  try:
      host = socket.gethostbyname(REMOTE_SERVER)
      s = socket.create_connection((host, 80), 2)
-     print("Here is the ip address the server is running on {} ".format([l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] \
-     if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]))
+     #print("Here is the ip address the server is running on {} ".format([l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] \
+     #if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]))
      return True
  except:
      print("Not connected to the internet")
@@ -67,6 +67,7 @@ if __name__ == "__main__":
  if result.init:
      logger.info("Pulling down yaml file so you can customize your environment!")
      test.init()
+     messages.send_message("User just initialized a new project")
  elif result.new:
      test.new()
  elif result.update:
