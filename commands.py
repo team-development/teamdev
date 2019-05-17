@@ -269,13 +269,23 @@ class OSDPBase(object):
 | '--------------' || '--------------' || '--------------' || '--------------' |
  '----------------'  '----------------'  '----------------'  '----------------'
 
-For local usage you must start the server first. python3 osdpv2.py --server &
+For local usage you must start the server first. python3 teamdev.py --server &
 For team usage your server is already running but you must edit the OSDPAPI server URL so that your team can connect.
 
-1. Type python3 osdpv2.py --init to bring down config file. Then edit config file to your needs.
-2. Type python3 osdpv2.py --new to use the new config file and pull down the artifacts.
-3. Type python3 osdpv2.py --start "projectname" to bring up the virtualbox or docker environment.
+1. Type python3 teamdev.py --init to bring down config file. Then edit config file to your needs.
+2. Type python3 teamdev.py --new to use the new config file and pull down the artifacts.
+3. Type python3 teamdev.py --start "projectname" to bring up the virtualbox or docker environment.
 
 """
         print(self.introbanner)
+
+    def list(self):
+        ENDPOINT = self.OSDPAPI + "/projects"
+        response = requests.get(ENDPOINT)
+        allprojects = response.json()
+        for k, v in allprojects.items():
+            for index in range(0, len(v)):
+                print(k,v[index])
+                print("\n\n\n\n")
+
 

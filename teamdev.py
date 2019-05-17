@@ -60,6 +60,7 @@ if __name__ == "__main__":
  parser.add_argument("--start","-s", required=False,dest='start',action='store',help='Start services')
  parser.add_argument("--stop","-d", required=False,dest='stop',action='store',help='Stop services')
  parser.add_argument("--clean","-c", required=False,dest='clean',action='store_true',help='Generates clean config file')
+ parser.add_argument("--list","-l", required=False,dest='list',action='store_true',help='List all projects on team server')
  # run in server mode only
  parser.add_argument("--server","-p", required=False,dest='server',action='store_true',help='Start server mode')
  result = parser.parse_args()
@@ -91,5 +92,6 @@ if __name__ == "__main__":
      Popen(["python3","configs.py"])
  elif result.server:
      Popen(["python3","apiserver.py"], stdout=PIPE)
-
+ elif result.list:
+     test.list()
 
