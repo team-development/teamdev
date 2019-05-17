@@ -80,6 +80,14 @@ class OSDPBase(object):
 
 
     def new(self):
+        try:
+            if not os.path.isfile('osdp/configuration/settings.yml'):
+                print("You ran new before init so let me grab the files for you")
+                self.init()
+                sys.exit(1)
+        except:
+            pass
+
         dataMap = self.get_settings()
         current_directory = os.getcwd()
         data_folder = Path("osdp")
@@ -239,7 +247,10 @@ class OSDPBase(object):
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
         oneproject = response.json()
+        print("Dumping API project to screen so you can verify the contents")
+        print("\n\n\n\n")
         print(oneproject)
+        print("\n\n\n\n")
         print("Now you can start your project by typing" + "./teamdev.py --start " + oneproject['project']['name'])
 
     def intro(self):
