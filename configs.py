@@ -25,7 +25,7 @@ inp = """\
                   imagename: buildmystartup/ghettolabs
                   pushto: ghettolabs/python
                   dockerdeveloperimage: buildmystartup/ghettolabs:python3.6
-                  dockerhome: /home/user/environments/osdp/osdp/projects/ghettolabs/docker
+                  dockerhome: /home
                 """
 def create_configs(inp):
     yaml = YAML()
