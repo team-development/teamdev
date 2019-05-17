@@ -288,6 +288,23 @@ For team usage your server is already running but you must edit the OSDPAPI serv
                 print(k,v[index])
                 print("\n\n\n\n")
     def add(self, project):
+        inp = """\
+                # Open Source Development Platform
+                osdp:
+                  # details
+                  linux: amazon   # So we can develop AWS Lambda with same python version
+                  username: james-knott
+                  password: mypassword
+                  project: company
+                  platform: docker # Currently supported docker and vagrant
+                  runtime: python3.6
+                  dockerhubusername: buildmystartup
+                  dockerhubpassword: mypassword
+                  imagename: buildmystartup/ghettolabs
+                  pushto: ghettolabs/python
+                  dockerdeveloperimage: buildmystartup/ghettolabs:python3.6
+                  dockerhome: /home
+                """
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
         oneproject = response.json()
@@ -302,6 +319,19 @@ For team usage your server is already running but you must edit the OSDPAPI serv
         dockerhubpassword = oneproject['project']['dockerhubpassword']
         imagename = oneproject['project']['imagename']
         dockerhome = oneproject['project']['dockerhome']
-
-
+        yaml = YAML()
+        dataMap = yaml.load(inp)
+        dataMap['osdp']['name'] = name
+        dataMap['osdp']['linux'] = linux
+        dataMap['osdp']['username'] = username
+        dataMap['osdp']['password'] = password
+        dataMap['osdp']['project'] = project
+        dataMap['osdp']['platform'] = platform
+        dataMap['osdp']['dockerhubusername'] = dockerhubusername
+        dataMap['osdp']['dockerhubpassword'] = dockerhubpassword
+        dataMap['osdp']['github'] = github
+        dataMap['osdp']['imagename'] = imagename
+        dataMap['osdp']['dockerhome'] = dockerhome
+        with open('osdp/configuration/settings.yml', "w") as f:
+            yaml.dump(dataMap, f)
 
