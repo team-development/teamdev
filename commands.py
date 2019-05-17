@@ -91,6 +91,10 @@ class OSDPBase(object):
             final_directory = os.path.join(current_directory, file_to_open)
         if os.path.exists(final_directory):
             self.logger.info("A project with that name already exists!")
+            try:
+                self.get_project_from_db(dataMap['osdp']['project'])
+            except:
+                self.logger.info("This settings file has not been pushed to the api yet")
             #self.backups.backup()
             try:
                 shutil.rmtree(final_directory, onerror=onerror)
@@ -110,7 +114,10 @@ class OSDPBase(object):
         except:
             self.logger.info("The folder already exists with that project name. Try python3 osdpv2 --start projectname")
             sys.exit(1)
-        self.save_to_db(dataMap)
+        try:
+            self.save_to_db(dataMap)
+        except:
+            self.logger.info("Could not save to db through api")
         self.get_project_from_db(dataMap['osdp']['project'])
         if dataMap['osdp']['platform'] == 'docker':
             IMG_SRC = dataMap['osdp']['dockerdeveloperimage']
@@ -118,7 +125,7 @@ class OSDPBase(object):
             client.login(username=dataMap['osdp']['dockerhubusername'], password=dataMap['osdp']['dockerhubpassword'], registry="https://index.docker.io/v1/")
             client.pull(IMG_SRC)
             client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
-        messages.send_message(dataMap['osdp']['username'] + " " +  "Just created a new" + " " + dataMap['osdp']['platform'] + " " +  "Development Environment") 
+        messages.send_message(dataMap['osdp']['username'] + " " +  "Just created a new" + " " + dataMap['osdp']['platform'] + " " +  "Development Environment")
 
     def zipfolder(self):
         dt = datetime.datetime.now()
@@ -217,17 +224,23 @@ class OSDPBase(object):
         "username": settings['osdp']['username'],
         "password": settings['osdp']['password'],
         "project": settings['osdp']['project'],
-        "github": "https://github.com/" + settings['osdp']['username'] + "/" + settings['osdp']['linux'] + ".git"
+        "github": "https://github.com/" + settings['osdp']['username'] + "/" + settings['osdp']['linux'] + ".git",
+        "dockerhubusername": settings['osdp']['dockerhubusername'],
+        "dockerhubpassword": settings['osdp']['dockerhubpassword'],
+        "imagename": settings['osdp']['imagename'],
+        "dockerhome": settings['osdp']['dockerhome']
         }
         ENDPOINT = self.OSDPAPI + "/project/" + settings['osdp']['project']
         response = requests.post(ENDPOINT, json=payload)
         print(response)
+        self.logger.info("Saved to API")
 
     def get_project_from_db(self, project):
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
         oneproject = response.json()
-        print(oneproject['project']['name'])
+        print(oneproject)
+        print("Now you can start your project by typing" + "./teamdev.py --start " + oneproject['project']['name'])
 
     def intro(self):
         self.introbanner = """
