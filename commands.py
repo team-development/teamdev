@@ -288,6 +288,12 @@ For team usage your server is already running but you must edit the OSDPAPI serv
                 print(k,v[index])
                 print("\n\n\n\n")
     def add(self, project):
+        try:
+            if not os.path.isfile('osdp/configuration/settings.yml'):
+                self.init()
+        except:
+            pass
+
         inp = """\
                 # Open Source Development Platform
                 osdp:
