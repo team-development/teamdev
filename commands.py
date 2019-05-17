@@ -287,5 +287,10 @@ For team usage your server is already running but you must edit the OSDPAPI serv
             for index in range(0, len(v)):
                 print(k,v[index])
                 print("\n\n\n\n")
+    def add(self, project):
+        ENDPOINT = self.OSDPAPI + "/project/" + project
+        response = requests.get(ENDPOINT)
+        oneproject = response.json()
+        print(oneproject)
 
 
