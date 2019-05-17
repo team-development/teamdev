@@ -291,6 +291,17 @@ For team usage your server is already running but you must edit the OSDPAPI serv
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
         oneproject = response.json()
-        print(oneproject)
+        name = oneproject['project']['name']
+        platform = oneproject['project']['platform']
+        linux = oneproject['project']['linux']
+        username = oneproject['project']['username']
+        password = oneproject['project']['password']
+        project = oneproject['project']['project']
+        github = oneproject['project']['github']
+        dockerhubusername = oneproject['project']['dockerhubusername']
+        dockerhubpassword = oneproject['project']['dockerhubpassword']
+        imagename = oneproject['project']['imagename']
+        dockerhome = oneproject['project']['dockerhome']
+
 
 
