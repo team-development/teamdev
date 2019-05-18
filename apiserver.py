@@ -51,8 +51,11 @@ def init_db():
 
 
 def server():
-    init_db()
-
+    try:
+        init_db()
+    except:
+        print("Could not create tables")
+        sys.exit(1)
     app = Flask(__name__)
     app.secret_key = 'osdp'
     api = Api(app)

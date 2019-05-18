@@ -123,6 +123,7 @@ class OSDPBase(object):
             self.logger.info("The folder already exists with that project name. Try python3 osdpv2 --start projectname")
             sys.exit(1)
         try:
+            print(dataMap)
             self.save_to_db(dataMap)
         except:
             self.logger.info("Could not save to db through api")
@@ -220,6 +221,7 @@ class OSDPBase(object):
         if os.path.isfile('osdp/configuration/settings.yml'):
             with open(r"osdp/configuration/settings.yml") as f:
                 dataMap = yaml.load(f)
+                #self.save_to_db(dataMap)
                 return dataMap
         else:
             self.logger.info("Could not find settings file. Downloading new copy. Please edit then run osdp --new again!")
