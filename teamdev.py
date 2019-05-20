@@ -62,6 +62,7 @@ if __name__ == "__main__":
  parser.add_argument("--clean","-c", required=False,dest='clean',action='store_true',help='Generates clean config file')
  parser.add_argument("--list","-l", required=False,dest='list',action='store_true',help='List all projects on team server')
  parser.add_argument("--add","-a", required=False,dest='add',action='store',help='Add project from team server')
+ parser.add_argument("--connect","-o", required=False,dest='connect',action='store',help='Connect to your kubernetes IDE')
  # run in server mode only
  parser.add_argument("--server","-p", required=False,dest='server',action='store_true',help='Start server mode')
  result = parser.parse_args()
@@ -98,4 +99,7 @@ if __name__ == "__main__":
  elif result.add:
      project = result.add
      test.add(project)
+ elif result.connect:
+     project = result.connect
+     test.connect(project)
 

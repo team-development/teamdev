@@ -238,7 +238,8 @@ class OSDPBase(object):
         "dockerhubusername": settings['osdp']['dockerhubusername'],
         "dockerhubpassword": settings['osdp']['dockerhubpassword'],
         "imagename": settings['osdp']['imagename'],
-        "dockerhome": settings['osdp']['dockerhome']
+        "dockerhome": settings['osdp']['dockerhome'],
+        "configs": settings['osdp']['configs']
         }
         ENDPOINT = self.OSDPAPI + "/project/" + settings['osdp']['project']
         response = requests.post(ENDPOINT, json=payload)
@@ -271,8 +272,9 @@ class OSDPBase(object):
 | '--------------' || '--------------' || '--------------' || '--------------' |
  '----------------'  '----------------'  '----------------'  '----------------'
 
-For local usage you must start the server first. python3 teamdev.py --server &
+For local usage you must start the server first. python3 teamdev.py --server
 For team usage your server is already running but you must edit the OSDPAPI server URL so that your team can connect.
+Go into messages.py and set your slack bot token if you want slack notifications.
 
 1. Type python3 teamdev.py --init to bring down config file. Then edit config file to your needs.
 2. Type python3 teamdev.py --new to use the new config file and pull down the artifacts.
@@ -306,6 +308,7 @@ For team usage your server is already running but you must edit the OSDPAPI serv
                   project: company
                   platform: docker # Currently supported docker and vagrant
                   runtime: python3.6
+                  configs: https://github.com/james-knott/configuration.git
                   dockerhubusername: buildmystartup
                   dockerhubpassword: mypassword
                   imagename: buildmystartup/ghettolabs
@@ -320,6 +323,7 @@ For team usage your server is already running but you must edit the OSDPAPI serv
         platform = oneproject['project']['platform']
         linux = oneproject['project']['linux']
         username = oneproject['project']['username']
+        configs = oneproject['project']['configs']
         password = oneproject['project']['password']
         project = oneproject['project']['project']
         github = oneproject['project']['github']
@@ -334,6 +338,7 @@ For team usage your server is already running but you must edit the OSDPAPI serv
         dataMap['osdp']['username'] = username
         dataMap['osdp']['password'] = password
         dataMap['osdp']['project'] = project
+        dataMap['osdp']['configs'] = configs
         dataMap['osdp']['platform'] = platform
         dataMap['osdp']['dockerhubusername'] = dockerhubusername
         dataMap['osdp']['dockerhubpassword'] = dockerhubpassword
