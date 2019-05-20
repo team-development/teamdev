@@ -42,7 +42,7 @@ class OSDPBase(object):
             try:
                 if not os.path.exists(self.final_directory):
                     os.makedirs(self.final_directory)
-                Repo.clone_from('https://github.com/james-knott/configuration.git', self.final_directory , branch="master", progress=MyProgressPrinter())
+                Repo.clone_from('https://github.com/team-development/configuration.git', self.final_directory , branch="master", progress=MyProgressPrinter())
                 self.logger.info("Downloaded the settings.yml file. Go to osdp/configuration/settings.yml to customize your environment!")
             except git.exc.GitCommandError as e:
                 self.logger.info("Could not clone the repo. Folder may exist.!")
@@ -115,12 +115,12 @@ class OSDPBase(object):
             self.logger.info("The linux distro you selected is not supported yet!")
             self.logger.info("Go back into the settings.yml file and assign the linux key: ubuntu, centos, amazon, debian, dcos-vagrant !")
             sys.exit(1)
-        url = "https://github.com/james-knott/" + dataMap['osdp']['linux'] + ".git"
+        url = "https://github.com/" + dataMap['osdp']['username'] + "/" + dataMap['osdp']['linux'] + ".git"
         self.logger.info("Downloading project files!")
         try:
             Repo.clone_from(url, final_directory , branch="master")
         except:
-            self.logger.info("The folder already exists with that project name. Try python3 osdpv2 --start projectname")
+            self.logger.info("The folder already exists with that project name. Try python3 teamdev.py --start projectname")
             sys.exit(1)
         try:
             print(dataMap)

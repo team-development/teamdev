@@ -18,6 +18,7 @@ inp = """\
                   username: james-knott
                   password: mypassword
                   project: company
+                  configs: https://github.com/james-knott/configuration.git
                   platform: docker # Currently supported docker and vagrant
                   runtime: python3.6
                   dockerhubusername: buildmystartup
