@@ -115,7 +115,8 @@ class OSDPBase(object):
             self.logger.info("The linux distro you selected is not supported yet!")
             self.logger.info("Go back into the settings.yml file and assign the linux key: ubuntu, centos, amazon, debian, dcos-vagrant !")
             sys.exit(1)
-        url = "https://github.com/" + dataMap['osdp']['username'] + "/" + dataMap['osdp']['linux'] + ".git"
+        url = dataMap['osdp']['github']
+        #url = "https://github.com/" + dataMap['osdp']['username'] + "/" + dataMap['osdp']['linux'] + ".git"
         self.logger.info("Downloading project files!")
         try:
             Repo.clone_from(url, final_directory , branch="master")
@@ -315,6 +316,7 @@ Go into messages.py and set your slack bot token if you want slack notifications
                   pushto: ghettolabs/python
                   dockerdeveloperimage: buildmystartup/ghettolabs:python3.6
                   dockerhome: /home
+                  github: https://github.com/james-knott/amazon.git
                 """
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
@@ -337,7 +339,7 @@ Go into messages.py and set your slack bot token if you want slack notifications
         dataMap['osdp']['linux'] = linux
         dataMap['osdp']['username'] = username
         dataMap['osdp']['password'] = password
-        dataMap['osdp']['project'] = project
+        dataMap['osdp']['project'] = name
         dataMap['osdp']['configs'] = configs
         dataMap['osdp']['platform'] = platform
         dataMap['osdp']['dockerhubusername'] = dockerhubusername
