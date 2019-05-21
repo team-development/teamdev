@@ -14,7 +14,7 @@ from subprocess import check_output, PIPE, Popen
 import subprocess
 import docker
 import dockerpty
-
+import messages
 
 class MyProgressPrinter(RemoteProgress):
     def update(self, op_code, cur_count, max_count=None, message=''):
@@ -34,7 +34,7 @@ class OSDPBase(object):
         self.logger = teamdev.setup_logging()
         self.REMOTE_SERVER = "www.github.com"
         self.introbanner = ""
-        self.OSDPAPI = "http://127.0.0.1:8080"
+        self.OSDPAPI = "http://159.203.66.100:8080"
         self.intro()
     def init(self):
         self.intro()
@@ -42,7 +42,7 @@ class OSDPBase(object):
             try:
                 if not os.path.exists(self.final_directory):
                     os.makedirs(self.final_directory)
-                Repo.clone_from('https://github.com/james-knott/configuration.git', self.final_directory , branch="master", progress=MyProgressPrinter())
+                Repo.clone_from('https://github.com/team-development/configuration.git', self.final_directory , branch="master", progress=MyProgressPrinter())
                 self.logger.info("Downloaded the settings.yml file. Go to osdp/configuration/settings.yml to customize your environment!")
             except git.exc.GitCommandError as e:
                 self.logger.info("Could not clone the repo. Folder may exist.!")
@@ -56,7 +56,7 @@ class OSDPBase(object):
                     osdp:
                       # details
                       linux: amazon   # So we can develop AWS Lambda with same python version
-                      username: jknott
+                      username: james-knott
                       project: company
                       configs: https://github.com/james-knott/configuration.git
                       platform: docker # Currently supported docker and vagrant
@@ -64,8 +64,10 @@ class OSDPBase(object):
                       dockerhubusername: buildmystartup
                       dockerhubpassword: mypassword
                       imagename: buildmystartup/ghettolabs
+                      dockerhome: /User
                       pushto: ghettolabs/python
                       dockerdeveloperimage: buildmystartup/ghettolabs:python3.6
+                      github: https://github.com/james-knott/amazon.git
                     """
                     yaml = YAML()
                     code = yaml.load(inp)
@@ -80,6 +82,14 @@ class OSDPBase(object):
 
 
     def new(self):
+        try:
+            if not os.path.isfile('osdp/configuration/settings.yml'):
+                print("You ran new before init so let me grab the files for you")
+                self.init()
+                sys.exit(1)
+        except:
+            pass
+
         dataMap = self.get_settings()
         current_directory = os.getcwd()
         data_folder = Path("osdp")
@@ -91,26 +101,39 @@ class OSDPBase(object):
             final_directory = os.path.join(current_directory, file_to_open)
         if os.path.exists(final_directory):
             self.logger.info("A project with that name already exists!")
+            self.logger.info("We will remove the folder but the api is for teams and will be remain intact")
+            try:
+                self.get_project_from_db(dataMap['osdp']['project'])
+            except:
+                self.logger.info("This settings file has not been pushed to the api yet")
             #self.backups.backup()
             try:
-                shutil.rmtree(final_directory, onerror=onerror)
+                #shutil.rmtree(final_directory, ignore_errors=False, onerror=self.handleError())
+                #subprocess.call(['rm','-rf'] + 'osdp' + '/' + 'projects' + '/' + dataMap['osdp']['project'], shell=True)
+                #shutil.rmtree('/home/user/projects/python/team_development_mac_version/teamdev/osdp/projects/myubuntu')
+                os.popen('rm -rf' + ' ' + 'osdp' + '/' + 'projects' + '/' + dataMap['osdp']['project'])
                 self.logger.info("The folder has been removed.!")
             except:
-                self.logger.info("The folder could  not be removed.!")
+                self.logger.info("Ingesting your settings file now!")
         else:
             os.makedirs(final_directory)
         if dataMap['osdp']['linux'] not in self.linux:
             self.logger.info("The linux distro you selected is not supported yet!")
             self.logger.info("Go back into the settings.yml file and assign the linux key: ubuntu, centos, amazon, debian, dcos-vagrant !")
             sys.exit(1)
-        url = "https://github.com/james-knott/" + dataMap['osdp']['linux'] + ".git"
+        url = dataMap['osdp']['github']
+        #url = "https://github.com/" + dataMap['osdp']['username'] + "/" + dataMap['osdp']['linux'] + ".git"
         self.logger.info("Downloading project files!")
         try:
             Repo.clone_from(url, final_directory , branch="master")
         except:
-            self.logger.info("The folder already exists with that project name. Try python3 osdpv2 --start projectname")
+            self.logger.info("The folder already exists with that project name. Try python3 teamdev.py --start projectname")
             sys.exit(1)
-        self.save_to_db(dataMap)
+        try:
+            #print(dataMap)
+            self.save_to_db(dataMap)
+        except:
+            self.logger.info("Could not save to db through api")
         self.get_project_from_db(dataMap['osdp']['project'])
         if dataMap['osdp']['platform'] == 'docker':
             IMG_SRC = dataMap['osdp']['dockerdeveloperimage']
@@ -118,6 +141,7 @@ class OSDPBase(object):
             client.login(username=dataMap['osdp']['dockerhubusername'], password=dataMap['osdp']['dockerhubpassword'], registry="https://index.docker.io/v1/")
             client.pull(IMG_SRC)
             client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
+        messages.send_message(dataMap['osdp']['username'] + " " +  "Just created a new" + " " + dataMap['osdp']['platform'] + " " +  "Development Environment")
 
     def zipfolder(self):
         dt = datetime.datetime.now()
@@ -142,6 +166,7 @@ class OSDPBase(object):
             print("This should have already been created")
             exit()
         if dataMap['osdp']['platform'] == 'vagrant':
+            messages.send_message(dataMap['osdp']['username'] + " " + "Just started a vagrant box for Python Development")
             vagrant_folder = Path(final_directory)
             v = vagrant.Vagrant(vagrant_folder, quiet_stdout=False)
             try:
@@ -166,7 +191,9 @@ class OSDPBase(object):
             #client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
             #response = [line for line in client.push(dataMap['osdp']['pushto'] + ":" + dataMap['osdp']['runtime'], stream=True)]
             container_id = client.create_container(dataMap['osdp']['imagename'],stdin_open=True,tty=True,command='/bin/bash', volumes=dataMap['osdp']['dockerhome'],host_config=client.create_host_config \
-            (binds=['/home:/home',]))
+            # Need to adjust this for mac users - change /Users to /home
+            (binds=[dataMap['osdp']['dockerhome'] + ':' + '/home',]))
+            #(binds=['/home:/home',]))
             dockerpty.start(client, container_id)
 
     def stop(self, projectname):
@@ -202,6 +229,7 @@ class OSDPBase(object):
         if os.path.isfile('osdp/configuration/settings.yml'):
             with open(r"osdp/configuration/settings.yml") as f:
                 dataMap = yaml.load(f)
+                #self.save_to_db(dataMap)
                 return dataMap
         else:
             self.logger.info("Could not find settings file. Downloading new copy. Please edit then run osdp --new again!")
@@ -214,17 +242,35 @@ class OSDPBase(object):
         "username": settings['osdp']['username'],
         "password": settings['osdp']['password'],
         "project": settings['osdp']['project'],
-        "github": "https://github.com/" + settings['osdp']['username'] + "/" + settings['osdp']['linux'] + ".git"
+        "github": settings['osdp']['github'],
+        #"github": "https://github.com/" + settings['osdp']['username'] + "/" + settings['osdp']['linux'] + ".git",
+        "dockerhubusername": settings['osdp']['dockerhubusername'],
+        "dockerhubpassword": settings['osdp']['dockerhubpassword'],
+        "imagename": settings['osdp']['imagename'],
+        "dockerhome": settings['osdp']['dockerhome'],
+        "configs": settings['osdp']['configs']
         }
         ENDPOINT = self.OSDPAPI + "/project/" + settings['osdp']['project']
         response = requests.post(ENDPOINT, json=payload)
         print(response)
+        self.logger.info("Saved to API")
 
     def get_project_from_db(self, project):
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
         oneproject = response.json()
-        print(oneproject['project']['name'])
+        print("Dumping API project to screen so you can verify the contents")
+        print("\n\n\n\n")
+        print(oneproject)
+        print("\n\n\n\n")
+        print("Now you can start your project by typing" + "./teamdev.py --start " + oneproject['project']['name'])
+
+    def delete_project_from_db(self, project):
+        ENDPOINT = self.OSDPAPI + "/project/" + project
+        response = requests.delete(ENDPOINT)
+        oneproject = response.json()
+        print("The project has been deleted")
+
 
     def intro(self):
         self.introbanner = """
@@ -242,13 +288,85 @@ class OSDPBase(object):
 | '--------------' || '--------------' || '--------------' || '--------------' |
  '----------------'  '----------------'  '----------------'  '----------------'
 
-For local usage you must start the server first. python3 osdpv2.py --server &
+For local usage you must start the server first. python3 teamdev.py --server
 For team usage your server is already running but you must edit the OSDPAPI server URL so that your team can connect.
+Go into messages.py and set your slack bot token if you want slack notifications.
 
-1. Type python3 osdpv2.py --init to bring down config file. Then edit config file to your needs.
-2. Type python3 osdpv2.py --new to use the new config file and pull down the artifacts.
-3. Type python3 osdpv2.py --start "projectname" to bring up the virtualbox or docker environment.
+1. Type python3 teamdev.py --init to bring down config file. Then edit config file to your needs.
+2. Type python3 teamdev.py --new to use the new config file and pull down the artifacts.
+3. Type python3 teamdev.py --start "projectname" to bring up the virtualbox or docker environment.
 
 """
         print(self.introbanner)
 
+    def list(self):
+        try:
+            ENDPOINT = self.OSDPAPI + "/projects"
+            response = requests.get(ENDPOINT)
+            allprojects = response.json()
+            for k, v in allprojects.items():
+                for index in range(0, len(v)):
+                    print(k,v[index])
+                    print("\n\n\n\n")
+        except:
+            print("The server is down")
+    def add(self, project):
+        try:
+            if not os.path.isfile('osdp/configuration/settings.yml'):
+                self.init()
+        except:
+            pass
+
+        inp = """\
+                # Open Source Development Platform
+                osdp:
+                  # details
+                  linux: amazon   # So we can develop AWS Lambda with same python version
+                  username: james-knott
+                  password: mypassword
+                  project: company
+                  platform: docker # Currently supported docker and vagrant
+                  runtime: python3.6
+                  configs: https://github.com/james-knott/configuration.git
+                  dockerhubusername: buildmystartup
+                  dockerhubpassword: mypassword
+                  imagename: buildmystartup/ghettolabs
+                  pushto: ghettolabs/python
+                  dockerdeveloperimage: buildmystartup/ghettolabs:python3.6
+                  dockerhome: /home
+                  github: https://github.com/james-knott/amazon.git
+                """
+        ENDPOINT = self.OSDPAPI + "/project/" + project
+        response = requests.get(ENDPOINT)
+        oneproject = response.json()
+        name = oneproject['project']['name']
+        platform = oneproject['project']['platform']
+        linux = oneproject['project']['linux']
+        username = oneproject['project']['username']
+        configs = oneproject['project']['configs']
+        password = oneproject['project']['password']
+        project = oneproject['project']['project']
+        github = oneproject['project']['github']
+        dockerhubusername = oneproject['project']['dockerhubusername']
+        dockerhubpassword = oneproject['project']['dockerhubpassword']
+        imagename = oneproject['project']['imagename']
+        dockerhome = oneproject['project']['dockerhome']
+        yaml = YAML()
+        dataMap = yaml.load(inp)
+        dataMap['osdp']['name'] = name
+        dataMap['osdp']['linux'] = linux
+        dataMap['osdp']['username'] = username
+        dataMap['osdp']['password'] = password
+        dataMap['osdp']['project'] = name
+        dataMap['osdp']['configs'] = configs
+        dataMap['osdp']['platform'] = platform
+        dataMap['osdp']['dockerhubusername'] = dockerhubusername
+        dataMap['osdp']['dockerhubpassword'] = dockerhubpassword
+        dataMap['osdp']['github'] = github
+        dataMap['osdp']['imagename'] = imagename
+        dataMap['osdp']['dockerhome'] = dockerhome
+        with open('osdp/configuration/settings.yml', "w") as f:
+            yaml.dump(dataMap, f)
+
+    def connect(self, project):
+        pass

@@ -38,10 +38,10 @@ def init_db():
     cursor = connection.cursor()
     create_table = "CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY, username text, password text)"
     cursor.execute(create_table)
-    create_table = "CREATE TABLE IF NOT EXISTS projects (name text PRIMARY KEY, platform text, linux text, username text, password text, project text, github text)"
+    create_table = "CREATE TABLE IF NOT EXISTS projects (name text PRIMARY KEY, platform text, linux text, username text, password text, project text, github text, dockerhubusername text, dockerhubpassword text, imagename text, dockerhome text, configs text)"
     cursor.execute(create_table)
     try:
-        cursor.execute("INSERT INTO projects VALUES ('ahead', 'vagrant', 'amazon', 'jknott', 'password', 'osdp', 'https://github.com/james-knott/amazon.git')")
+        cursor.execute("INSERT INTO projects VALUES ('ghettolabs', 'vagrant', 'amazon', 'james-knott', 'password', 'osdp', 'https://github.com/james-knott/amazon.git', 'buildmystartup', 'password', 'buildmystartup/python3.6', '/home', 'https://github.com/james-knott/configuration.git')")
     except:
         pass
     connection.commit()
@@ -51,8 +51,11 @@ def init_db():
 
 
 def server():
-    init_db()
-
+    try:
+        init_db()
+    except:
+        print("Could not create tables")
+        sys.exit(1)
     app = Flask(__name__)
     app.secret_key = 'osdp'
     api = Api(app)
@@ -70,7 +73,7 @@ def server():
             connection.close()
 
             if row:
-                return {'project': {'name': row[0], 'platform': row[1], 'linux': row[2], 'username': row[3], 'password': row[4], 'project': row[5], 'github': row[6]}}
+                return {'project': {'name': row[0], 'platform': row[1], 'linux': row[2], 'username': row[3], 'password': row[4], 'project': row[5], 'github': row[6], 'dockerhubusername': row[7], 'dockerhubpassword': row[8], 'imagename': row[9], 'dockerhome': row[10], 'configs': row[11]}}
             return {'message': 'Project not found'}, 404
 
         @classmethod
@@ -82,7 +85,7 @@ def server():
             row = result.fetchone()
             connection.close()
             if row:
-                return {'project': {'name': row[0], 'platform': row[1], 'linux': row[2], 'username': row[3], 'password': row[4], 'project': row[5], 'github': row[6]}}
+                return {'project': {'name': row[0], 'platform': row[1], 'linux': row[2], 'username': row[3], 'password': row[4], 'project': row[5], 'github': row[6], 'dockerhubusername': row[7], 'dockerhubpassword': row[8], 'imagename': row[9], 'dockerhome': row[10], 'configs': row[11]}}
 
 
         def post(self, name):
@@ -91,7 +94,7 @@ def server():
 
             data = request.get_json()
             project = self.find_by_name(name)
-            updated_project = {'name': name, 'platform': data['platform'], 'linux': data['linux'], 'username': data['username'], 'password': data['password'], 'project': data['project'], 'github': data['github']}
+            updated_project = {'name': name, 'platform': data['platform'], 'linux': data['linux'], 'username': data['username'], 'password': data['password'], 'project': data['project'], 'github': data['github'], 'dockerhubusername': data['dockerhubusername'], 'dockerhubpassword': data['dockerhubpassword'], 'imagename': data['imagename'], 'dockerhome': data['dockerhome'], 'configs': data['configs'], }
 
             if project is None:
                 try:
@@ -109,7 +112,7 @@ def server():
         def put(self, name):
             data = request.get_json()
             project = self.find_by_name(name)
-            updated_project = {'name': name, 'platform': data['platform'], 'linux': data['linux'], 'username': data['username'], 'password': data['password'], 'project': data['project'], 'github': data['github']}
+            updated_project = {'name': name, 'platform': data['platform'], 'linux': data['linux'], 'username': data['username'], 'password': data['password'], 'project': data['project'], 'github': data['github'], 'dockerhubusername': data['dockerhubusername'], 'dockerhubpassword': data['dockerhubpassword'], 'imagename': data['imagename'],        'dockerhome': data['dockerhome'], 'configs': data['configs']}
 
             if project is None:
                 try:
@@ -129,8 +132,8 @@ def server():
         def insert(cls, project):
             connection = sqlite3.connect('data.db')
             cursor = connection.cursor()
-            query = "INSERT INTO projects VALUES (?,?,?,?,?,?,?)"
-            cursor.execute(query, (project['name'], project['platform'], project['linux'], project['username'], project['password'], project['project'], project['github']))
+            query = "INSERT INTO projects VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
+            cursor.execute(query, (project['name'], project['platform'], project['linux'], project['username'], project['password'], project['project'], project['github'], project['dockerhubusername'], project['dockerhubpassword'], project['imagename'], project['dockerhome'], project['configs']))
             connection.commit()
             connection.close()
 
@@ -148,8 +151,8 @@ def server():
         def update(cls, project):
             connection = sqlite3.connect('data.db')
             cursor = connection.cursor()
-            query = "UPDATE projects SET platform=?, linux=?, username=?, password=?, project=?, github=? WHERE name=?"
-            cursor.execute(query, (project['platform'], project['linux'], project['username'], project['password'], project['project'], project['github'], project['name']))
+            query = "UPDATE projects SET platform=?, linux=?, username=?, password=?, project=?, github=?, dockerhubusername=?, dockerhubpassword=?, imagename=?, dockerhome=?,  WHERE name=?"
+            cursor.execute(query, (project['platform'], project['linux'], project['username'], project['password'], project['project'], project['github'], project['dockerhubusername'], project['dockerhubpassword'], project['imagename'], project['dockerhome'], project['configs'], project['name']))
             connection.commit()
             connection.close()
 
@@ -165,7 +168,7 @@ def server():
             result = cursor.execute(query)
             projects = []
             for row in result:
-                projects.append({'name': row[0], 'platform': row[1], 'linux': row[2], 'username': row[3], 'password': row[4], 'project': row[5], 'github': row[6]})
+                projects.append({'name': row[0], 'platform': row[1], 'linux': row[2], 'username': row[3], 'password': row[4], 'project': row[5], 'github': row[6], 'dockerhubusername': row[7], 'dockerhubpassword': row[8], 'imagename': row[9], 'dockerhome': row[10], 'configs': row[11]})
 
             connection.close()
 

@@ -18,6 +18,7 @@ inp = """\
                   username: james-knott
                   password: mypassword
                   project: company
+                  configs: https://github.com/james-knott/configuration.git
                   platform: docker # Currently supported docker and vagrant
                   runtime: python3.6
                   dockerhubusername: buildmystartup
@@ -25,7 +26,8 @@ inp = """\
                   imagename: buildmystartup/ghettolabs
                   pushto: ghettolabs/python
                   dockerdeveloperimage: buildmystartup/ghettolabs:python3.6
-                  dockerhome: /home/user/environments/osdp/osdp/projects/ghettolabs/docker
+                  dockerhome: /home
+                  github: https://github.com/james-knott/amazon.git
                 """
 def create_configs(inp):
     yaml = YAML()

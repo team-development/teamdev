@@ -7,7 +7,7 @@ import commands
 import socket
 from pathlib import Path
 from subprocess import Popen,PIPE
-
+import messages
 
 
 
@@ -19,7 +19,8 @@ def setup_logging():
  for h in logger.handlers:
      logger.removeHandler(h)
  h = logging.StreamHandler(sys.stdout)
- FORMAT = "[%(levelname)s %(asctime)s %(filename)s:%(lineno)s - %(funcName)21s() ] %(message)s"
+ #FORMAT = "[%(levelname)s %(asctime)s %(filename)s:%(lineno)s - %(funcName)21s() ] %(message)s"
+ FORMAT = "%(message)s"
  h.setFormatter(logging.Formatter(FORMAT))
  logger.addHandler(h)
  logger.setLevel(logging.INFO)
@@ -29,8 +30,8 @@ def is_connected(REMOTE_SERVER):
  try:
      host = socket.gethostbyname(REMOTE_SERVER)
      s = socket.create_connection((host, 80), 2)
-     print("Here is the ip address the server is running on {} ".format([l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] \
-     if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]))
+     #print("Here is the ip address the server is running on {} ".format([l for l in ([ip for ip in socket.gethostbyname_ex(socket.gethostname())[2] \
+     #if not ip.startswith("127.")][:1], [[(s.connect(('8.8.8.8', 53)), s.getsockname()[0], s.close()) for s in [socket.socket(socket.AF_INET, socket.SOCK_DGRAM)]][0][1]]) if l][0][0]))
      return True
  except:
      print("Not connected to the internet")
@@ -46,6 +47,7 @@ def setup_folder_structure():
 if __name__ == "__main__":
  logger = setup_logging() # sets up logging
  logger.info("Welcome to Open Source Development Platform!")
+ #print("Welcome to Open Source Development Platform for Teams")
  is_connected(REMOTE_SERVER) # checks to see if connected to the internet
  setup_folder_structure()
  test = commands.OSDPBase()
@@ -60,13 +62,19 @@ if __name__ == "__main__":
  parser.add_argument("--start","-s", required=False,dest='start',action='store',help='Start services')
  parser.add_argument("--stop","-d", required=False,dest='stop',action='store',help='Stop services')
  parser.add_argument("--clean","-c", required=False,dest='clean',action='store_true',help='Generates clean config file')
+ parser.add_argument("--list","-l", required=False,dest='list',action='store_true',help='List all projects on team server')
+ parser.add_argument("--add","-a", required=False,dest='add',action='store',help='Add project from team server')
+ parser.add_argument("--connect","-o", required=False,dest='connect',action='store',help='Connect to your kubernetes IDE')
+ parser.add_argument("--delete","-t", required=False,dest='delete',action='store',help='Delete project from API')
  # run in server mode only
  parser.add_argument("--server","-p", required=False,dest='server',action='store_true',help='Start server mode')
  result = parser.parse_args()
 
  if result.init:
      logger.info("Pulling down yaml file so you can customize your environment!")
+     #print("Pulling down yaml file so you can customize your development environment.")
      test.init()
+     messages.send_message("User just initialized a new project")
  elif result.new:
      test.new()
  elif result.update:
@@ -77,18 +85,31 @@ if __name__ == "__main__":
  elif result.destroy:
      project = result.destroy
      logger.info("We are destroying your vagrant box now!")
+     #print("We are destroying your vagrant box and removing your project folder.")
      test.destroy(projectname=project)
  elif result.start:
      project = result.start
      logger.info("We are starting your development environment now!")
+     #print("We are starting your development environment now!")
      test.start(projectname=project)
  elif result.stop:
      project = result.stop
      logger.info("We are stopping your vagrant box now!")
+     #print("We are stopping y our vagrant box now!")
      test.stop(projectname=project)
  elif result.clean:
      Popen(["python3","configs.py"])
  elif result.server:
      Popen(["python3","apiserver.py"], stdout=PIPE)
-
+ elif result.list:
+     test.list()
+ elif result.add:
+     project = result.add
+     test.add(project)
+ elif result.delete:
+     project = result.delete
+     test.delete_project_from_db(project)
+ elif result.connect:
+     project = result.connect
+     test.connect(project)
 
