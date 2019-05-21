@@ -192,7 +192,8 @@ class OSDPBase(object):
             #response = [line for line in client.push(dataMap['osdp']['pushto'] + ":" + dataMap['osdp']['runtime'], stream=True)]
             container_id = client.create_container(dataMap['osdp']['imagename'],stdin_open=True,tty=True,command='/bin/bash', volumes=dataMap['osdp']['dockerhome'],host_config=client.create_host_config \
             # Need to adjust this for mac users - change /Users to /home
-            (binds=['/Users:/home',]))
+            (binds=[dataMap['osdp']['dockerhome'] + ':' + '/home',]))
+            #(binds=['/home:/home',]))
             dockerpty.start(client, container_id)
 
     def stop(self, projectname):
