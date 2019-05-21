@@ -41,7 +41,7 @@ def init_db():
     create_table = "CREATE TABLE IF NOT EXISTS projects (name text PRIMARY KEY, platform text, linux text, username text, password text, project text, github text, dockerhubusername text, dockerhubpassword text, imagename text, dockerhome text, configs text)"
     cursor.execute(create_table)
     try:
-        cursor.execute("INSERT INTO projects VALUES ('ghettolabs', 'vagrant', 'amazon', 'jknott', 'password', 'osdp', 'https://github.com/james-knott/amazon.git', 'buildmystartup', 'password', 'buildmystartup/python3.6', '/home', 'https://github.com/james-knott/configuration.git')")
+        cursor.execute("INSERT INTO projects VALUES ('ghettolabs', 'vagrant', 'amazon', 'james-knott', 'password', 'osdp', 'https://github.com/james-knott/amazon.git', 'buildmystartup', 'password', 'buildmystartup/python3.6', '/home', 'https://github.com/james-knott/configuration.git')")
     except:
         pass
     connection.commit()

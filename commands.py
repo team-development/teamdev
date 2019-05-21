@@ -101,16 +101,20 @@ class OSDPBase(object):
             final_directory = os.path.join(current_directory, file_to_open)
         if os.path.exists(final_directory):
             self.logger.info("A project with that name already exists!")
+            self.logger.info("We will remove the folder but the api is for teams and will be remain intact")
             try:
                 self.get_project_from_db(dataMap['osdp']['project'])
             except:
                 self.logger.info("This settings file has not been pushed to the api yet")
             #self.backups.backup()
             try:
-                shutil.rmtree(final_directory, onerror=onerror)
+                #shutil.rmtree(final_directory, ignore_errors=False, onerror=self.handleError())
+                #subprocess.call(['rm','-rf'] + 'osdp' + '/' + 'projects' + '/' + dataMap['osdp']['project'], shell=True)
+                #shutil.rmtree('/home/user/projects/python/team_development_mac_version/teamdev/osdp/projects/myubuntu')
+                os.popen('rm -rf' + ' ' + 'osdp' + '/' + 'projects' + '/' + dataMap['osdp']['project'])
                 self.logger.info("The folder has been removed.!")
             except:
-                self.logger.info("The folder could  not be removed.!")
+                self.logger.info("Ingesting your settings file now!")
         else:
             os.makedirs(final_directory)
         if dataMap['osdp']['linux'] not in self.linux:
@@ -126,7 +130,7 @@ class OSDPBase(object):
             self.logger.info("The folder already exists with that project name. Try python3 teamdev.py --start projectname")
             sys.exit(1)
         try:
-            print(dataMap)
+            #print(dataMap)
             self.save_to_db(dataMap)
         except:
             self.logger.info("Could not save to db through api")
@@ -237,7 +241,8 @@ class OSDPBase(object):
         "username": settings['osdp']['username'],
         "password": settings['osdp']['password'],
         "project": settings['osdp']['project'],
-        "github": "https://github.com/" + settings['osdp']['username'] + "/" + settings['osdp']['linux'] + ".git",
+        "github": settings['osdp']['github'],
+        #"github": "https://github.com/" + settings['osdp']['username'] + "/" + settings['osdp']['linux'] + ".git",
         "dockerhubusername": settings['osdp']['dockerhubusername'],
         "dockerhubpassword": settings['osdp']['dockerhubpassword'],
         "imagename": settings['osdp']['imagename'],
@@ -258,6 +263,13 @@ class OSDPBase(object):
         print(oneproject)
         print("\n\n\n\n")
         print("Now you can start your project by typing" + "./teamdev.py --start " + oneproject['project']['name'])
+
+    def delete_project_from_db(self, project):
+        ENDPOINT = self.OSDPAPI + "/project/" + project
+        response = requests.delete(ENDPOINT)
+        oneproject = response.json()
+        print("The project has been deleted")
+
 
     def intro(self):
         self.introbanner = """
@@ -287,13 +299,16 @@ Go into messages.py and set your slack bot token if you want slack notifications
         print(self.introbanner)
 
     def list(self):
-        ENDPOINT = self.OSDPAPI + "/projects"
-        response = requests.get(ENDPOINT)
-        allprojects = response.json()
-        for k, v in allprojects.items():
-            for index in range(0, len(v)):
-                print(k,v[index])
-                print("\n\n\n\n")
+        try:
+            ENDPOINT = self.OSDPAPI + "/projects"
+            response = requests.get(ENDPOINT)
+            allprojects = response.json()
+            for k, v in allprojects.items():
+                for index in range(0, len(v)):
+                    print(k,v[index])
+                    print("\n\n\n\n")
+        except:
+            print("The server is down")
     def add(self, project):
         try:
             if not os.path.isfile('osdp/configuration/settings.yml'):
@@ -352,3 +367,5 @@ Go into messages.py and set your slack bot token if you want slack notifications
         with open('osdp/configuration/settings.yml', "w") as f:
             yaml.dump(dataMap, f)
 
+    def connect(self, project):
+        pass
