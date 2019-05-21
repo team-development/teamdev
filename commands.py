@@ -56,7 +56,7 @@ class OSDPBase(object):
                     osdp:
                       # details
                       linux: amazon   # So we can develop AWS Lambda with same python version
-                      username: jknott
+                      username: james-knott
                       project: company
                       configs: https://github.com/james-knott/configuration.git
                       platform: docker # Currently supported docker and vagrant
@@ -64,8 +64,10 @@ class OSDPBase(object):
                       dockerhubusername: buildmystartup
                       dockerhubpassword: mypassword
                       imagename: buildmystartup/ghettolabs
+                      dockerhome: /User
                       pushto: ghettolabs/python
                       dockerdeveloperimage: buildmystartup/ghettolabs:python3.6
+                      github: https://github.com/james-knott/amazon.git
                     """
                     yaml = YAML()
                     code = yaml.load(inp)
