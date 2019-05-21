@@ -34,7 +34,7 @@ class OSDPBase(object):
         self.logger = teamdev.setup_logging()
         self.REMOTE_SERVER = "www.github.com"
         self.introbanner = ""
-        self.OSDPAPI = "http://127.0.0.1:8080"
+        self.OSDPAPI = "http://159.203.66.100:8080"
         self.intro()
     def init(self):
         self.intro()
