@@ -34,4 +34,4 @@
 ## TODO:
 
 
-kill $(ps aux | grep teamdev.py | awk '{ print $2 }')
+kill $(ps aux | grep apiserver.py | awk '{ print $2 }')
