@@ -29,18 +29,9 @@
 
 
 ## Developers
-- Please use developer branch and pull request
+- Please use develop branch and pull request
 
 ## TODO:
 
-- Move start stop and destroy to one method.
-- Add custom exceptions and assert. Basic testing.
-- Add Dropbox sync
-- clean up all os file system checks
-- General refactor of all code to make pretty and perform better.
-- Add state machine so that the application always knows what has been started.
-- Make plugin system so users can add Vagrantfiles or profiles.
-- Make it so the application can automatically pull from ansible-galaxy
-- Create a mode that creates an environment in the background like virtualenv but at a vagrant scale.
 
 kill $(ps aux | grep teamdev.py | awk '{ print $2 }')
