@@ -33,5 +33,6 @@
 
 ## TODO:
 
+## If you make changes to the API server here is how to kill
 
 kill $(ps aux | grep apiserver.py | awk '{ print $2 }')
