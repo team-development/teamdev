@@ -19,7 +19,8 @@ def setup_logging():
  for h in logger.handlers:
      logger.removeHandler(h)
  h = logging.StreamHandler(sys.stdout)
- FORMAT = "[%(levelname)s %(asctime)s %(filename)s:%(lineno)s - %(funcName)21s() ] %(message)s"
+ #FORMAT = "[%(levelname)s %(asctime)s %(filename)s:%(lineno)s - %(funcName)21s() ] %(message)s"
+ FORMAT = "%(message)s"
  h.setFormatter(logging.Formatter(FORMAT))
  logger.addHandler(h)
  logger.setLevel(logging.INFO)
@@ -45,8 +46,8 @@ def setup_folder_structure():
 
 if __name__ == "__main__":
  logger = setup_logging() # sets up logging
- #logger.info("Welcome to Open Source Development Platform!")
- print("Welcome to Open Source Development Platform for Teams")
+ logger.info("Welcome to Open Source Development Platform!")
+ #print("Welcome to Open Source Development Platform for Teams")
  is_connected(REMOTE_SERVER) # checks to see if connected to the internet
  setup_folder_structure()
  test = commands.OSDPBase()
@@ -70,8 +71,8 @@ if __name__ == "__main__":
  result = parser.parse_args()
 
  if result.init:
-     #logger.info("Pulling down yaml file so you can customize your environment!")
-     print("Pulling down yaml file so you can customize your development environment.")
+     logger.info("Pulling down yaml file so you can customize your environment!")
+     #print("Pulling down yaml file so you can customize your development environment.")
      test.init()
      messages.send_message("User just initialized a new project")
  elif result.new:
@@ -83,18 +84,18 @@ if __name__ == "__main__":
      test.backup()
  elif result.destroy:
      project = result.destroy
-     #logger.info("We are destroying your vagrant box now!")
-     print("We are destroying your vagrant box and removing your project folder.")
+     logger.info("We are destroying your vagrant box now!")
+     #print("We are destroying your vagrant box and removing your project folder.")
      test.destroy(projectname=project)
  elif result.start:
      project = result.start
-     #logger.info("We are starting your development environment now!")
-     print("We are starting your development environment now!")
+     logger.info("We are starting your development environment now!")
+     #print("We are starting your development environment now!")
      test.start(projectname=project)
  elif result.stop:
      project = result.stop
-     #logger.info("We are stopping your vagrant box now!")
-     print("We are stopping y our vagrant box now!")
+     logger.info("We are stopping your vagrant box now!")
+     #print("We are stopping y our vagrant box now!")
      test.stop(projectname=project)
  elif result.clean:
      Popen(["python3","configs.py"])
