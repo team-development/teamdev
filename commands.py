@@ -172,7 +172,7 @@ class OSDPBase(object):
             try:
                 v.up()
             except Exception as e:
-                pass
+                print("Please open a github issue if you have a problem")
             os.chdir(vagrant_folder)
             cmdCommand = "vagrant port"
             process = subprocess.Popen(cmdCommand.split(), stdout=subprocess.PIPE)
