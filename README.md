@@ -48,13 +48,9 @@
 - Please use develop branch and pull request
 
 ## TODO:
-<<<<<<< HEAD
-
-## If you make changes to the API server here is how to kill
-=======
  - Create list of bind mount points for docker and use a try block to make sure the user is not asking for a mount point that isnt allowed by default
  - If project already exists consider forcing rename of the project during creation. We don't want to delete the project or change one that has been already uploaded in the API
  -
->>>>>>> develop
+## If you make changes to the API server here is how to kill
 
 kill $(ps aux | grep apiserver.py | awk '{ print $2 }')
