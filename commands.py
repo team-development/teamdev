@@ -164,7 +164,7 @@ class OSDPBase(object):
         final_directory = os.path.join(current_directory, file_to_open)
         if not os.path.exists(final_directory):
             print("This should have already been created")
-            exit()
+            self.new()
         if dataMap['osdp']['platform'] == 'vagrant':
             messages.send_message(dataMap['osdp']['username'] + " " + "Just started a vagrant box for Python Development")
             vagrant_folder = Path(final_directory)
@@ -172,7 +172,7 @@ class OSDPBase(object):
             try:
                 v.up()
             except Exception as e:
-                pass
+                print("Please open a github issue if you have a problem")
             os.chdir(vagrant_folder)
             cmdCommand = "vagrant port"
             process = subprocess.Popen(cmdCommand.split(), stdout=subprocess.PIPE)
@@ -370,3 +370,16 @@ Go into messages.py and set your slack bot token if you want slack notifications
 
     def connect(self, project):
         pass
+
+    def get_status(self):
+        cmdCommand = "vagrant global-status --prune"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+
+    def destroy_all(self):
+        cmdCommand = "vagrant global-status --prune | awk '/running/{print $1}' | xargs -r -d '\n' -n 1 -- vagrant destroy -f"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+

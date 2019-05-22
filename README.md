@@ -1,3 +1,18 @@
+```
+ .----------------.  .----------------.  .----------------.  .----------------.
+| .--------------. || .--------------. || .--------------. || .--------------. |
+| |     ____     | || |    _______   | || |  ________    | || |   ______     | |
+| |   .'    `.   | || |   /  ___  |  | || | |_   ___ `.  | || |  |_   __ \   | |
+| |  /  .--.  \  | || |  |  (__ \_|  | || |   | |   `. \ | || |    | |__) |  | |
+| |  | |    | |  | || |   '.___`-.   | || |   | |    | | | || |    |  ___/   | |
+| |  \  `--'  /  | || |  |`\____) |  | || |  _| |___.' / | || |   _| |_      | |
+| |   `.____.'   | || |  |_______.'  | || | |________.'  | || |  |_____|     | |
+| |              | || |              | || |              | || |              | |
+| '--------------' || '--------------' || '--------------' || '--------------' |
+ '----------------'  '----------------'  '----------------'  '----------------'
+ ```
+ 
+
 ## Features
 - Manages mutiple vagrant environments
 - YAML config file. 
@@ -13,6 +28,7 @@
 - Install requirements_osdp.txt
 - amazon aws account (For S3 backups) 
 - sudo apt-get install python3-distutils for docker to work. (if not on Ubuntu 19.04)
+- Docker
 
 
 ## How to use
@@ -32,7 +48,13 @@
 - Please use develop branch and pull request
 
 ## TODO:
+<<<<<<< HEAD
 
 ## If you make changes to the API server here is how to kill
+=======
+ - Create list of bind mount points for docker and use a try block to make sure the user is not asking for a mount point that isnt allowed by default
+ - If project already exists consider forcing rename of the project during creation. We don't want to delete the project or change one that has been already uploaded in the API
+ -
+>>>>>>> develop
 
 kill $(ps aux | grep apiserver.py | awk '{ print $2 }')
