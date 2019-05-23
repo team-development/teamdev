@@ -383,3 +383,10 @@ Go into messages.py and set your slack bot token if you want slack notifications
         output, error = process.communicate()
         print("\n\n\n\n", output)
 
+    def kill_server(self):
+        cmdCommand = "kill $(ps aux | grep apiserver.py | awk '{ print $2 }')"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+
+
