@@ -81,7 +81,7 @@ class OSDPBase(object):
             print("Network connection is down")
 
 
-    def new(self):
+    def build(self):
         try:
             if not os.path.isfile('osdp/configuration/settings.yml'):
                 print("You ran new before init so let me grab the files for you")
@@ -164,7 +164,7 @@ class OSDPBase(object):
         final_directory = os.path.join(current_directory, file_to_open)
         if not os.path.exists(final_directory):
             print("This should have already been created")
-            self.new()
+            self.build()
         if dataMap['osdp']['platform'] == 'vagrant':
             messages.send_message(dataMap['osdp']['username'] + " " + "Just started a vagrant box for Python Development")
             vagrant_folder = Path(final_directory)
@@ -209,7 +209,7 @@ class OSDPBase(object):
         v.halt()
 
     def update(self):
-        self.new()
+        self.build()
 
 
     def destroy(self, projectname):
@@ -293,7 +293,7 @@ For team usage your server is already running but you must edit the OSDPAPI serv
 Go into messages.py and set your slack bot token if you want slack notifications.
 
 1. Type python3 teamdev.py --init to bring down config file. Then edit config file to your needs.
-2. Type python3 teamdev.py --new to use the new config file and pull down the artifacts.
+2. Type python3 teamdev.py --build to use the new config file and pull down the artifacts.
 3. Type python3 teamdev.py --start "projectname" to bring up the virtualbox or docker environment.
 
 """

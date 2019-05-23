@@ -55,7 +55,7 @@ if __name__ == "__main__":
  # sets up command line arguments
  parser = argparse.ArgumentParser(description='Open Source Development Platform')
  parser.add_argument("--init","-i", required=False, dest='init',action='store_true',help='Initialize new project folder')
- parser.add_argument("--new","-n", required=False, dest='new',action='store_true',help='Create new project from template file')
+ parser.add_argument("--build","-n", required=False, dest='build',action='store_true',help='Create new project from template file')
  parser.add_argument("--update","-u", required=False, dest='update',action='store_true',help='Update settings')
  parser.add_argument("--backup","-b", required=False,dest='backup',action='store',help='Sync project to backup device')
  parser.add_argument("--destroy","-e", required=False,dest='destroy',action='store',help='Delete project from folder')
@@ -78,8 +78,8 @@ if __name__ == "__main__":
      #print("Pulling down yaml file so you can customize your development environment.")
      test.init()
      messages.send_message("User just initialized a new project")
- elif result.new:
-     test.new()
+ elif result.build:
+     test.build()
  elif result.update:
      test.update()
  elif result.backup:
