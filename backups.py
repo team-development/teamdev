@@ -8,7 +8,6 @@ def backup(self):
     foldername = "osdpbackup"
     dt = datetime.datetime.now()
     datestring = dt.strftime('%m_%d_%Y')
-    foldername = "osdpbackup"
     with open(r"osdp/configuration/settings.yml") as f:
         dataMap = yaml.load(f)
         local_directory = os.getcwd()
