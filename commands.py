@@ -15,6 +15,7 @@ import subprocess
 import docker
 import dockerpty
 import messages
+from urllib.request import urlopen
 
 class MyProgressPrinter(RemoteProgress):
     def update(self, op_code, cur_count, max_count=None, message=''):
@@ -30,7 +31,9 @@ class OSDPBase(object):
         self.directory = 'osdp'
         self.secret_code = ''
         self.encoded_key = ''
-        self.linux = ['ubuntu', 'centos', 'debian', 'amazon', 'dcos-vagrant', 'xenial', 'docker', 'amazonlinux', 'docker-lambda']
+        self.linux = ['ubuntu', 'centos', 'debian', 'amazon', 'xenial', 'docker', 'amazonlinux', 'docker-lambda']
+        self.bindmounts = ['/home', '/Users']
+        self.platforms = ['docker', 'vagrant', 'kubernetes']
         self.logger = teamdev.setup_logging()
         self.REMOTE_SERVER = "www.github.com"
         self.introbanner = ""
@@ -93,12 +96,20 @@ class OSDPBase(object):
         dataMap = self.get_settings()
         current_directory = os.getcwd()
         data_folder = Path("osdp")
+        if dataMap['osdp']['platform'] not in self.platforms:
+            print("Currently the only platforms supported are docker, vagrant or kubernetes(in development)")
+            print("Go back into settings.yml and change your platform then re-run ./teamdev.py --build")
+            sys.exit()
         if dataMap['osdp']['platform'] == 'vagrant':
             file_to_open = data_folder / "projects" / dataMap['osdp']['project'] / "vagrant"
             final_directory = os.path.join(current_directory, file_to_open)
         elif dataMap['osdp']['platform'] == 'docker':
             file_to_open = data_folder / "projects" / dataMap['osdp']['project'] / "docker"
             final_directory = os.path.join(current_directory, file_to_open)
+            if dataMap['osdp']['dockerhome'] not in self.bindmounts:
+                print("Docker home can only be mounted on '/Users' for Mac and '/home/' for linux")
+                print("Edit your settings.yml file and change your docker home")
+                sys.exit()
         if os.path.exists(final_directory):
             self.logger.info("A project with that name already exists!")
             self.logger.info("We will remove the folder but the api is for teams and will be remain intact")
@@ -119,7 +130,7 @@ class OSDPBase(object):
             os.makedirs(final_directory)
         if dataMap['osdp']['linux'] not in self.linux:
             self.logger.info("The linux distro you selected is not supported yet!")
-            self.logger.info("Go back into the settings.yml file and assign the linux key: ubuntu, centos, amazon, debian, dcos-vagrant !")
+            self.logger.info("Go back into the settings.yml file and assign the linux key: ubuntu, centos, amazon, debian!")
             sys.exit(1)
         url = dataMap['osdp']['github']
         #url = "https://github.com/" + dataMap['osdp']['username'] + "/" + dataMap['osdp']['linux'] + ".git"
@@ -191,7 +202,6 @@ class OSDPBase(object):
             #client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
             #response = [line for line in client.push(dataMap['osdp']['pushto'] + ":" + dataMap['osdp']['runtime'], stream=True)]
             container_id = client.create_container(dataMap['osdp']['imagename'],stdin_open=True,tty=True,command='/bin/bash', volumes=dataMap['osdp']['dockerhome'],host_config=client.create_host_config \
-            # Need to adjust this for mac users - change /Users to /home
             (binds=[dataMap['osdp']['dockerhome'] + ':' + '/home',]))
             #(binds=['/home:/home',]))
             dockerpty.start(client, container_id)
