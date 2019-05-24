@@ -177,7 +177,7 @@ class OSDPBase(object):
             subprocess.run(["vagrant","ssh"])
         elif dataMap['osdp']['platform'] == 'docker':
             print("Ths platform is docker and we will connect to the image")
-            os.chdir(final_directory)
+            os.chdir(self.final_directory)
             retval = os.getcwd()
             IMG_SRC = dataMap['osdp']['dockerdeveloperimage']
             client = docker.Client()
@@ -345,6 +345,7 @@ Go into messages.py and set your slack bot token if you want slack notifications
                   dockerhome: /home
                   github: https://github.com/james-knott/amazon.git
                 """
+        self.check_if_project_exists(project)
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
         oneproject = response.json()
@@ -410,4 +411,16 @@ Go into messages.py and set your slack bot token if you want slack notifications
             self.logger.info("The folder has been removed.!")
             sys.exit()
         except:
+            sys.exit()
+    def dockerps(self):
+        cmdCommand = "docker ps -a"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+
+    def check_if_project_exists(self, project):
+        try:
+            self.get_project_from_db(project)
+        except:
+            print("Project does not exist or is misspelled")
             sys.exit()

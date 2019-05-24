@@ -65,6 +65,7 @@ if __name__ == "__main__":
  parser.add_argument("--list","-l", required=False,dest='list',action='store_true',help='List all projects on team server')
  parser.add_argument("--status","-r", required=False,dest='status',action='store_true',help='Get status of all running vagrant boxes')
  parser.add_argument("--destroyall","-x", required=False,dest='destroyall',action='store_true',help='Destroy all running vagrant boxes')
+ parser.add_argument("--dockerps","-ps", required=False,dest='dockerps',action='store_true',help='Gives the status of all running docker containers')
  parser.add_argument("--killserver","-k", required=False,dest='killserver',action='store_true',help='Kill local server')
  parser.add_argument("--add","-a", required=False,dest='add',action='store',help='Add project from team server')
  parser.add_argument("--connect","-o", required=False,dest='connect',action='store',help='Connect to your kubernetes IDE')
@@ -108,6 +109,8 @@ if __name__ == "__main__":
      test.list()
  elif result.status:
      test.get_status()
+ elif result.dockerps:
+     test.dockerps()
  elif result.destroyall:
      test.destroy_all()
  elif result.killserver:
