@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 
 
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, abort
 from flask_restful import Resource, Api
 from flask_jwt import JWT, jwt_required
 from security import authenticate, identity
@@ -10,6 +10,21 @@ import sqlite3
 import multiprocessing
 import gunicorn.app.base
 from gunicorn.six import iteritems
+from functools import wraps
+
+# The actual decorator function
+def require_appkey(view_function):
+    @wraps(view_function)
+    # the new, post-decoration function. Note *args and **kwargs here.
+    def decorated_function(*args, **kwargs):
+        with open('api.key', 'r') as apikey:
+            key=apikey.read().replace('\n', '')
+        #if request.args.get('key') and request.args.get('key') == key:
+        if request.headers.get('x-api-key') and request.headers.get('x-api-key') == key:
+            return view_function(*args, **kwargs)
+        else:
+            abort(401)
+    return decorated_function
 
 
 class StandaloneApplication(gunicorn.app.base.BaseApplication):
@@ -63,7 +78,7 @@ def server():
 
 
     class Project(Resource):
-        #@jwt_required()
+        @require_appkey
         def get(self, name):
             connection = sqlite3.connect('data.db')
             cursor = connection.cursor()
@@ -87,7 +102,7 @@ def server():
             if row:
                 return {'project': {'name': row[0], 'platform': row[1], 'linux': row[2], 'username': row[3], 'password': row[4], 'project': row[5], 'github': row[6], 'dockerhubusername': row[7], 'dockerhubpassword': row[8], 'imagename': row[9], 'dockerhome': row[10], 'configs': row[11]}}
 
-
+        @require_appkey
         def post(self, name):
             if self.find_by_name(name):
                 return {'message': 'The project {} already exists'.format(name)}, 400
@@ -161,6 +176,7 @@ def server():
 
 
     class ProjectList(Resource):
+        @require_appkey
         def get(self):
             connection = sqlite3.connect('data.db')
             cursor = connection.cursor()

@@ -41,7 +41,8 @@ class OSDPBase(object):
         self.bindmounts = ['/Users', '/home']
         self.REMOTE_SERVER = "www.github.com"
         self.introbanner = ""
-        self.OSDPAPI = "http://159.203.66.100:8080"
+        #self.OSDPAPI = "http://159.203.66.100:8080"
+        self.OSDPAPI = "http://127.0.0.1:8080"
         self.intro()
     def init(self):
         self.intro()
@@ -264,14 +265,23 @@ class OSDPBase(object):
         "dockerhome": settings['osdp']['dockerhome'],
         "configs": settings['osdp']['configs']
         }
+
+        with open('api.key', 'r') as apikey:
+              key = apikey.read().replace('\n', '')
+              myheader = {"x-api-key": key }
+
         ENDPOINT = self.OSDPAPI + "/project/" + settings['osdp']['project']
-        response = requests.post(ENDPOINT, json=payload)
+        response = requests.post(ENDPOINT, headers=myheaders, json=payload)
         print(response)
         self.logger.info("Saved to API")
 
     def get_project_from_db(self, project):
+        with open('api.key', 'r') as apikey:
+             key = apikey.read().replace('\n', '')
+             myheader = {"x-api-key": key }
+
         ENDPOINT = self.OSDPAPI + "/project/" + project
-        response = requests.get(ENDPOINT)
+        response = requests.get(ENDPOINT, headers=myheader)
         oneproject = response.json()
         print("Dumping API project to screen so you can verify the contents")
         print("\n\n\n\n")
@@ -314,9 +324,12 @@ Go into messages.py and set your slack bot token if you want slack notifications
         print(self.introbanner)
 
     def list(self):
+        with open('api.key', 'r') as apikey:
+            key = apikey.read().replace('\n', '')
+            myheader = {"x-api-key": key }
         try:
             ENDPOINT = self.OSDPAPI + "/projects"
-            response = requests.get(ENDPOINT)
+            response = requests.get(ENDPOINT, headers=myheader)
             allprojects = response.json()
             for k, v in allprojects.items():
                 for index in range(0, len(v)):
@@ -351,8 +364,12 @@ Go into messages.py and set your slack bot token if you want slack notifications
                   github: https://github.com/james-knott/amazon.git
                 """
         self.check_if_project_exists(project)
+        with open('api.key', 'r') as apikey:
+             key = apikey.read().replace('\n', '')
+             myheader = {"x-api-key": key }
+
         ENDPOINT = self.OSDPAPI + "/project/" + project
-        response = requests.get(ENDPOINT)
+        response = requests.get(ENDPOINT, headers=myheader)
         oneproject = response.json()
         name = oneproject['project']['name']
         platform = oneproject['project']['platform']
