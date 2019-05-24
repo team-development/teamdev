@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import teamdev
 import vagrant
-import backups
 import git
 from git import Repo
 from git import RemoteProgress
@@ -461,9 +460,17 @@ Go into messages.py and set your slack bot token if you want slack notifications
             s3.Bucket(mybucket).upload_file('osdpbackup.zip', "osdp" + "/" + datestring + "/" + "osdpbackup.zip")
 
     def backup_to_dropbox(self):
-        cmdCommand = "rsync -av ../teamdev/ ~/Dropbox/teamdev/"
-        process = subprocess.Popen(cmdCommand, shell=True)
-        output, error = process.communicate()
-        print("\n\n\n\n", output)
+        home = str(Path.home())
+        p = Path(home + '/' + 'Dropbox')
+        if not p.exists():
+            print("You must install Dropbox or create a folder named Dropbox in your home directory")
+            sys.exit()
+        try:
+            cmdCommand = "rsync -av ../teamdev/ ~/Dropbox/teamdev/"
+            process = subprocess.Popen(cmdCommand, shell=True)
+            output, error = process.communicate()
+            print("\n\n\n\n", output)
+        except:
+            print("Dropbox folder does not exist. Please create the folder or install Dropbox if you want backups to Dropbox")
 
 

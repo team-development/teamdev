@@ -8,7 +8,6 @@ import socket
 from pathlib import Path
 from subprocess import Popen,PIPE
 import messages
-import backups
 
 
 
@@ -39,8 +38,8 @@ def is_connected(REMOTE_SERVER):
 
 
 def setup_folder_structure():
-    path = Path('backups')
-    path.mkdir(exist_ok=True)
+    #path = Path('backups')
+    #path.mkdir(exist_ok=True)
 
 
 
