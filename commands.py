@@ -121,7 +121,7 @@ class OSDPBase(object):
         self.logger.info("Downloading project files!")
         try:
             Repo.clone_from(url, self.final_directory , branch="master")
-        except:
+        except git.exc.GitCommandError as e:
             self.logger.info("The folder already exists with that project name. Try python3 teamdev.py --start projectname")
             #self.remove_project_folder(dataMap)
             sys.exit(1)
@@ -157,13 +157,13 @@ class OSDPBase(object):
         current_directory = os.getcwd()
         data_folder = Path("osdp")
         file_to_open = data_folder / "projects" / dataMap['osdp']['project'] / dataMap['osdp']['platform']
-        final_directory = os.path.join(current_directory, file_to_open)
-        if not os.path.exists(final_directory):
+        self.final_directory = os.path.join(current_directory, file_to_open)
+        if not os.path.exists(self.final_directory):
             print("This should have already been created")
             self.build()
         if dataMap['osdp']['platform'] == 'vagrant':
             messages.send_message(dataMap['osdp']['username'] + " " + "Just started a vagrant box for Python Development")
-            vagrant_folder = Path(final_directory)
+            vagrant_folder = Path(self.final_directory)
             v = vagrant.Vagrant(vagrant_folder, quiet_stdout=False)
             try:
                 v.up()
@@ -392,6 +392,11 @@ Go into messages.py and set your slack bot token if you want slack notifications
         process = subprocess.Popen(cmdCommand, shell=True)
         output, error = process.communicate()
         print("\n\n\n\n", output)
+        cmdCommand = "vagrant global-status --prune | awk '/poweroff/{print $1}' | xargs -r -d '\n' -n 1 -- vagrant destroy -f"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+
 
     def kill_server(self):
         cmdCommand = "kill $(ps aux | grep apiserver.py | awk '{ print $2 }')"
