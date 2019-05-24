@@ -295,7 +295,7 @@ class OSDPBase(object):
               myheader = {"x-api-key": key }
 
         ENDPOINT = self.OSDPAPI + "/project/" + project
-        response = requests.delete(ENDPOINT, headers=myheadr)
+        response = requests.delete(ENDPOINT, headers=myheader)
         oneproject = response.json()
         print("The project has been deleted")
 
