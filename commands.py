@@ -3,7 +3,6 @@ import os
 from pathlib import Path
 import teamdev
 import vagrant
-import backups
 import git
 from git import Repo
 from git import RemoteProgress
@@ -15,7 +14,12 @@ import subprocess
 import docker
 import dockerpty
 import messages
-from urllib.request import urlopen
+import datetime
+import boto3
+import botocore
+import zipfile
+
+
 
 class MyProgressPrinter(RemoteProgress):
     def update(self, op_code, cur_count, max_count=None, message=''):
@@ -31,10 +35,10 @@ class OSDPBase(object):
         self.directory = 'osdp'
         self.secret_code = ''
         self.encoded_key = ''
-        self.linux = ['ubuntu', 'centos', 'debian', 'amazon', 'xenial', 'docker', 'amazonlinux', 'docker-lambda']
-        self.bindmounts = ['/home', '/Users']
+        self.linux = ['ubuntu', 'centos', 'debian', 'amazon', 'dcos-vagrant', 'xenial', 'docker', 'amazonlinux', 'docker-lambda']
         self.platforms = ['docker', 'vagrant', 'kubernetes']
         self.logger = teamdev.setup_logging()
+        self.bindmounts = ['/Users', '/home']
         self.REMOTE_SERVER = "www.github.com"
         self.introbanner = ""
         self.OSDPAPI = "http://159.203.66.100:8080"
@@ -94,51 +98,37 @@ class OSDPBase(object):
             pass
 
         dataMap = self.get_settings()
+        self.check_settings(dataMap)
         current_directory = os.getcwd()
         data_folder = Path("osdp")
-        if dataMap['osdp']['platform'] not in self.platforms:
-            print("Currently the only platforms supported are docker, vagrant or kubernetes(in development)")
-            print("Go back into settings.yml and change your platform then re-run ./teamdev.py --build")
-            sys.exit()
         if dataMap['osdp']['platform'] == 'vagrant':
             file_to_open = data_folder / "projects" / dataMap['osdp']['project'] / "vagrant"
-            final_directory = os.path.join(current_directory, file_to_open)
+            self.final_directory = os.path.join(current_directory, file_to_open)
         elif dataMap['osdp']['platform'] == 'docker':
             file_to_open = data_folder / "projects" / dataMap['osdp']['project'] / "docker"
-            final_directory = os.path.join(current_directory, file_to_open)
-            if dataMap['osdp']['dockerhome'] not in self.bindmounts:
-                print("Docker home can only be mounted on '/Users' for Mac and '/home/' for linux")
-                print("Edit your settings.yml file and change your docker home")
-                sys.exit()
-        if os.path.exists(final_directory):
+            self.final_directory = os.path.join(current_directory, file_to_open)
+        elif dataMap['osdp']['platform'] == 'kubernetes':
+            file_to_open = data_folder / "projects" / dataMap['osdp']['project'] / "kubernetes"
+            self.final_directory = os.path.join(current_directory, file_to_open)
+        if os.path.exists(self.final_directory):
             self.logger.info("A project with that name already exists!")
             self.logger.info("We will remove the folder but the api is for teams and will be remain intact")
             try:
                 self.get_project_from_db(dataMap['osdp']['project'])
             except:
                 self.logger.info("This settings file has not been pushed to the api yet")
-            #self.backups.backup()
-            try:
-                #shutil.rmtree(final_directory, ignore_errors=False, onerror=self.handleError())
-                #subprocess.call(['rm','-rf'] + 'osdp' + '/' + 'projects' + '/' + dataMap['osdp']['project'], shell=True)
-                #shutil.rmtree('/home/user/projects/python/team_development_mac_version/teamdev/osdp/projects/myubuntu')
-                os.popen('rm -rf' + ' ' + 'osdp' + '/' + 'projects' + '/' + dataMap['osdp']['project'])
-                self.logger.info("The folder has been removed.!")
-            except:
-                self.logger.info("Ingesting your settings file now!")
+            self.backup_to_S3()
+            self.remove_project_folder(dataMap)
         else:
-            os.makedirs(final_directory)
-        if dataMap['osdp']['linux'] not in self.linux:
-            self.logger.info("The linux distro you selected is not supported yet!")
-            self.logger.info("Go back into the settings.yml file and assign the linux key: ubuntu, centos, amazon, debian!")
-            sys.exit(1)
+            os.makedirs(self.final_directory)
         url = dataMap['osdp']['github']
         #url = "https://github.com/" + dataMap['osdp']['username'] + "/" + dataMap['osdp']['linux'] + ".git"
         self.logger.info("Downloading project files!")
         try:
-            Repo.clone_from(url, final_directory , branch="master")
-        except:
+            Repo.clone_from(url, self.final_directory , branch="master")
+        except git.exc.GitCommandError as e:
             self.logger.info("The folder already exists with that project name. Try python3 teamdev.py --start projectname")
+            #self.remove_project_folder(dataMap)
             sys.exit(1)
         try:
             #print(dataMap)
@@ -149,9 +139,9 @@ class OSDPBase(object):
         if dataMap['osdp']['platform'] == 'docker':
             IMG_SRC = dataMap['osdp']['dockerdeveloperimage']
             client = docker.Client()
-            client.login(username=dataMap['osdp']['dockerhubusername'], password=dataMap['osdp']['dockerhubpassword'], registry="https://index.docker.io/v1/")
+            #client.login(username=dataMap['osdp']['dockerhubusername'], password=dataMap['osdp']['dockerhubpassword'], registry="https://index.docker.io/v1/")
             client.pull(IMG_SRC)
-            client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
+            #client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
         messages.send_message(dataMap['osdp']['username'] + " " +  "Just created a new" + " " + dataMap['osdp']['platform'] + " " +  "Development Environment")
 
     def zipfolder(self):
@@ -172,13 +162,13 @@ class OSDPBase(object):
         current_directory = os.getcwd()
         data_folder = Path("osdp")
         file_to_open = data_folder / "projects" / dataMap['osdp']['project'] / dataMap['osdp']['platform']
-        final_directory = os.path.join(current_directory, file_to_open)
-        if not os.path.exists(final_directory):
+        self.final_directory = os.path.join(current_directory, file_to_open)
+        if not os.path.exists(self.final_directory):
             print("This should have already been created")
             self.build()
         if dataMap['osdp']['platform'] == 'vagrant':
             messages.send_message(dataMap['osdp']['username'] + " " + "Just started a vagrant box for Python Development")
-            vagrant_folder = Path(final_directory)
+            vagrant_folder = Path(self.final_directory)
             v = vagrant.Vagrant(vagrant_folder, quiet_stdout=False)
             try:
                 v.up()
@@ -192,7 +182,7 @@ class OSDPBase(object):
             subprocess.run(["vagrant","ssh"])
         elif dataMap['osdp']['platform'] == 'docker':
             print("Ths platform is docker and we will connect to the image")
-            os.chdir(final_directory)
+            os.chdir(self.final_directory)
             retval = os.getcwd()
             IMG_SRC = dataMap['osdp']['dockerdeveloperimage']
             client = docker.Client()
@@ -202,6 +192,7 @@ class OSDPBase(object):
             #client.tag(image=dataMap['osdp']['dockerdeveloperimage'], repository=dataMap['osdp']['pushto'],tag=dataMap['osdp']['runtime'])
             #response = [line for line in client.push(dataMap['osdp']['pushto'] + ":" + dataMap['osdp']['runtime'], stream=True)]
             container_id = client.create_container(dataMap['osdp']['imagename'],stdin_open=True,tty=True,command='/bin/bash', volumes=dataMap['osdp']['dockerhome'],host_config=client.create_host_config \
+            # Need to adjust this for mac users - change /Users to /home
             (binds=[dataMap['osdp']['dockerhome'] + ':' + '/home',]))
             #(binds=['/home:/home',]))
             dockerpty.start(client, container_id)
@@ -244,6 +235,19 @@ class OSDPBase(object):
         else:
             self.logger.info("Could not find settings file. Downloading new copy. Please edit then run osdp --new again!")
             self.init()
+    def check_settings(self, dataMap):
+        if dataMap['osdp']['platform'] not in self.platforms:
+            print("Currently the only platforms supported are docker, vagrant or kubernetes(in development)")
+            print("Go back into settings.yml and change your platform then re-run ./teamdev.py --build")
+            sys.exit()
+        if dataMap['osdp']['dockerhome'] not in self.bindmounts:
+            print("Docker home can only be mounted on '/Users' for Mac and '/home/' for linux")
+            print("Edit your settings.yml file and change your docker home")
+            sys.exit()
+        if dataMap['osdp']['linux'] not in self.linux:
+            self.logger.info("The linux distro you selected is not supported yet!")
+            self.logger.info("Go back into the settings.yml file and assign the linux key: ubuntu, centos, amazon, debian!")
+            sys.exit()
 
     def save_to_db(self, settings):
         payload = {
@@ -346,6 +350,7 @@ Go into messages.py and set your slack bot token if you want slack notifications
                   dockerhome: /home
                   github: https://github.com/james-knott/amazon.git
                 """
+        self.check_if_project_exists(project)
         ENDPOINT = self.OSDPAPI + "/project/" + project
         response = requests.get(ENDPOINT)
         oneproject = response.json()
@@ -377,6 +382,7 @@ Go into messages.py and set your slack bot token if you want slack notifications
         dataMap['osdp']['dockerhome'] = dockerhome
         with open('osdp/configuration/settings.yml', "w") as f:
             yaml.dump(dataMap, f)
+        print("Your project has been restored to osdp/configuration/settings.yml so  you can edit or run it again")
 
     def connect(self, project):
         pass
@@ -392,11 +398,80 @@ Go into messages.py and set your slack bot token if you want slack notifications
         process = subprocess.Popen(cmdCommand, shell=True)
         output, error = process.communicate()
         print("\n\n\n\n", output)
+        cmdCommand = "vagrant global-status --prune | awk '/poweroff/{print $1}' | xargs -r -d '\n' -n 1 -- vagrant destroy -f"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+
 
     def kill_server(self):
         cmdCommand = "kill $(ps aux | grep apiserver.py | awk '{ print $2 }')"
         process = subprocess.Popen(cmdCommand, shell=True)
         output, error = process.communicate()
         print("\n\n\n\n", output)
+
+    def remove_project_folder(self, dataMap):
+        try:
+            os.popen('rm -rf' + ' ' + 'osdp' + '/' + 'projects' + '/' + dataMap['osdp']['project'])
+            self.logger.info("The folder has been removed.!")
+            sys.exit()
+        except:
+            sys.exit()
+    def dockerps(self):
+        cmdCommand = "docker ps -a"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+
+    def check_if_project_exists(self, project):
+        try:
+            self.get_project_from_db(project)
+        except:
+            print("Project does not exist or is misspelled")
+            sys.exit()
+
+    def backup_to_S3(self):
+        yaml = YAML()
+        self.logger.info("Backing up projects to S3.!")
+        foldername = "osdpbackup"
+        dt = datetime.datetime.now()
+        datestring = dt.strftime('%m_%d_%Y')
+        with open(r"osdp/configuration/settings.yml") as f:
+            dataMap = yaml.load(f)
+            local_directory = os.getcwd()
+            mybucket = "osdp-backups-" + dataMap['osdp']['username']
+            destination = 'OSDP'
+            region = 'us-west-2'
+            conn = boto3.resource('s3',region_name="us-west-2")
+            if not conn.Bucket(mybucket) in conn.buckets.all():
+                print('creating bucket ' + mybucket + '...')
+                try:
+                    conn.create_bucket(Bucket=mybucket, CreateBucketConfiguration={'LocationConstraint': 'us-west-2'})
+                except botocore.exceptions.ClientError as e:
+                    print('Error: ' + e.response['Error']['Message'])
+            else:
+                print('bucket ' + mybucket + ' already exists')
+
+            self.zipfolder()
+            client = boto3.client('s3')
+            session = boto3.Session(region_name='us-west-2')
+            s3 = session.resource('s3')
+            s3bucket = s3.Bucket(mybucket)
+            s3.Bucket(mybucket).upload_file('osdpbackup.zip', "osdp" + "/" + datestring + "/" + "osdpbackup.zip")
+
+    def backup_to_dropbox(self):
+        home = str(Path.home())
+        p = Path(home + '/' + 'Dropbox')
+        if not p.exists():
+            print("You must install Dropbox or create a folder named Dropbox in your home directory")
+            sys.exit()
+        try:
+            cmdCommand = "rsync -av ../teamdev/ ~/Dropbox/teamdev/"
+            process = subprocess.Popen(cmdCommand, shell=True)
+            output, error = process.communicate()
+            print("\n\n\n\n", output)
+        except:
+            print("Dropbox folder does not exist. Please create the folder or install Dropbox if you want backups to Dropbox")
+
 
 
