@@ -15,6 +15,12 @@ import subprocess
 import docker
 import dockerpty
 import messages
+import datetime
+import boto3
+import botocore
+import zipfile
+
+
 
 class MyProgressPrinter(RemoteProgress):
     def update(self, op_code, cur_count, max_count=None, message=''):
@@ -112,8 +118,8 @@ class OSDPBase(object):
                 self.get_project_from_db(dataMap['osdp']['project'])
             except:
                 self.logger.info("This settings file has not been pushed to the api yet")
+            self.backup_to_S3()
             self.remove_project_folder(dataMap)
-            #self.backups.backup()
         else:
             os.makedirs(self.final_directory)
         url = dataMap['osdp']['github']
@@ -424,3 +430,40 @@ Go into messages.py and set your slack bot token if you want slack notifications
         except:
             print("Project does not exist or is misspelled")
             sys.exit()
+
+    def backup_to_S3(self):
+        yaml = YAML()
+        self.logger.info("Backing up projects to S3.!")
+        foldername = "osdpbackup"
+        dt = datetime.datetime.now()
+        datestring = dt.strftime('%m_%d_%Y')
+        with open(r"osdp/configuration/settings.yml") as f:
+            dataMap = yaml.load(f)
+            local_directory = os.getcwd()
+            mybucket = "osdp-backups-" + dataMap['osdp']['username']
+            destination = 'OSDP'
+            region = 'us-west-2'
+            conn = boto3.resource('s3',region_name="us-west-2")
+            if not conn.Bucket(mybucket) in conn.buckets.all():
+                print('creating bucket ' + mybucket + '...')
+                try:
+                    conn.create_bucket(Bucket=mybucket, CreateBucketConfiguration={'LocationConstraint': 'us-west-2'})
+                except botocore.exceptions.ClientError as e:
+                    print('Error: ' + e.response['Error']['Message'])
+            else:
+                print('bucket ' + mybucket + ' already exists')
+
+            self.zipfolder()
+            client = boto3.client('s3')
+            session = boto3.Session(region_name='us-west-2')
+            s3 = session.resource('s3')
+            s3bucket = s3.Bucket(mybucket)
+            s3.Bucket(mybucket).upload_file('osdpbackup.zip', "osdp" + "/" + datestring + "/" + "osdpbackup.zip")
+
+    def backup_to_dropbox(self):
+        cmdCommand = "rsync -av ../teamdev/ ~/Dropbox/teamdev/"
+        process = subprocess.Popen(cmdCommand, shell=True)
+        output, error = process.communicate()
+        print("\n\n\n\n", output)
+
+

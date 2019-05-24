@@ -8,7 +8,7 @@ import socket
 from pathlib import Path
 from subprocess import Popen,PIPE
 import messages
-
+import backups
 
 
 
@@ -66,6 +66,7 @@ if __name__ == "__main__":
  parser.add_argument("--status","-r", required=False,dest='status',action='store_true',help='Get status of all running vagrant boxes')
  parser.add_argument("--destroyall","-x", required=False,dest='destroyall',action='store_true',help='Destroy all running vagrant boxes')
  parser.add_argument("--dockerps","-ps", required=False,dest='dockerps',action='store_true',help='Gives the status of all running docker containers')
+ parser.add_argument("--dropbox","-db", required=False,dest='dropbox',action='store_true',help='Does an rsync to your Dropbox folder')
  parser.add_argument("--killserver","-k", required=False,dest='killserver',action='store_true',help='Kill local server')
  parser.add_argument("--add","-a", required=False,dest='add',action='store',help='Add project from team server')
  parser.add_argument("--connect","-o", required=False,dest='connect',action='store',help='Connect to your kubernetes IDE')
@@ -85,7 +86,7 @@ if __name__ == "__main__":
      test.update()
  elif result.backup:
      logger.info("We are backing up all your projects to S3!")
-     test.backup()
+     test.backup_to_S3()
  elif result.destroy:
      project = result.destroy
      logger.info("We are destroying your vagrant box now!")
@@ -113,6 +114,8 @@ if __name__ == "__main__":
      test.dockerps()
  elif result.destroyall:
      test.destroy_all()
+ elif result.dropbox:
+     test.backup_to_dropbox()
  elif result.killserver:
      test.kill_server()
  elif result.add:
