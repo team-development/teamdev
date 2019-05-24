@@ -41,8 +41,8 @@ class OSDPBase(object):
         self.bindmounts = ['/Users', '/home']
         self.REMOTE_SERVER = "www.github.com"
         self.introbanner = ""
-        #self.OSDPAPI = "http://159.203.66.100:8080"
-        self.OSDPAPI = "http://127.0.0.1:8080"
+        self.OSDPAPI = "http://159.203.66.100:8080"
+        #self.OSDPAPI = "http://127.0.0.1:8080"
         self.intro()
     def init(self):
         self.intro()
@@ -265,13 +265,13 @@ class OSDPBase(object):
         "dockerhome": settings['osdp']['dockerhome'],
         "configs": settings['osdp']['configs']
         }
-
+        print(payload)
         with open('api.key', 'r') as apikey:
               key = apikey.read().replace('\n', '')
               myheader = {"x-api-key": key }
 
         ENDPOINT = self.OSDPAPI + "/project/" + settings['osdp']['project']
-        response = requests.post(ENDPOINT, headers=myheaders, json=payload)
+        response = requests.post(ENDPOINT, headers=myheader, json=payload)
         print(response)
         self.logger.info("Saved to API")
 
@@ -290,8 +290,12 @@ class OSDPBase(object):
         print("Now you can start your project by typing" + "./teamdev.py --start " + oneproject['project']['name'])
 
     def delete_project_from_db(self, project):
+        with open('api.key', 'r') as apikey:
+              key = apikey.read().replace('\n', '')
+              myheader = {"x-api-key": key }
+
         ENDPOINT = self.OSDPAPI + "/project/" + project
-        response = requests.delete(ENDPOINT)
+        response = requests.delete(ENDPOINT, headers=myheadr)
         oneproject = response.json()
         print("The project has been deleted")
 
