@@ -118,7 +118,7 @@ class OSDPBase(object):
                 self.get_project_from_db(dataMap['osdp']['project'])
             except:
                 self.logger.info("This settings file has not been pushed to the api yet")
-            self.backup_to_S3()
+            #self.backup_to_S3()
             self.remove_project_folder(dataMap)
         else:
             os.makedirs(self.final_directory)
